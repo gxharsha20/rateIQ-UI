@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RateIQ</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- Backdrop overlay -->
+  <div id="backdrop" class="backdrop"></div>
+
+  <!-- Side Panel -->
+  <div id="side-panel" class="side-panel">
+
+    <!-- Collapsed bar (visible when collapsed) -->
+    <div id="collapsed-bar" class="collapsed-bar">
+      <img src="logo.png" alt="RateIQ" class="collapsed-logo">
+      <button id="expand-btn" class="toggle-btn" aria-label="Expand panel">
+        <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+          <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Expanded panel (visible when expanded) -->
+    <div id="expanded-panel" class="expanded-panel">
+
+      <!-- LOADING STATE -->
+      <div id="loading-state" class="loading-state">
+        <div class="loading-header">
+          <div class="logo">
+            <img src="logo.png" alt="RateIQ" class="logo-img">
+          </div>
+          <button class="toggle-btn collapse-btn" aria-label="Collapse panel">
+            <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+              <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="loading-content">
+          <div class="spinner"></div>
+          <p class="loading-label">Aggregating reviews...</p>
+          <div class="platform-indicators">
+            <div class="platform-pill scanning" data-platform="tiktok">
+              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M8.5 1v9.5a2.5 2.5 0 1 1-2-2.45V5.5A5 5 0 1 0 11 10V4.5a4.5 4.5 0 0 0 3 1.13V3.08A4.5 4.5 0 0 1 11 1H8.5Z" fill="currentColor"/></svg>
+              TikTok
+              <span class="scan-dot"></span>
+            </div>
+            <div class="platform-pill scanning" data-platform="reddit" style="animation-delay: 0.4s">
+              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm4.6 9.2a1.1 1.1 0 0 1-1.1 1.1c-.3 0-.6-.1-.8-.3-.7.5-1.7.8-2.7.8s-2-.3-2.7-.8c-.2.2-.5.3-.8.3a1.1 1.1 0 0 1 0-2.2c.3 0 .6.1.8.3.4-.3.9-.5 1.4-.6l.7-3.2 2.2.5a.8.8 0 1 1-.1.5l-1.8-.4-.6 2.6c.5.1 1 .3 1.4.6.2-.2.5-.3.8-.3a1.1 1.1 0 0 1 1.1 1.1ZM6 9.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm4 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm-.3 1.3c-.5.5-1.2.7-1.7.7s-1.2-.2-1.7-.7a.3.3 0 0 1 .4-.4c.3.4.8.5 1.3.5s1-.2 1.3-.5a.3.3 0 0 1 .4.4Z" fill="currentColor"/></svg>
+              Reddit
+              <span class="scan-dot"></span>
+            </div>
+            <div class="platform-pill scanning" data-platform="youtube" style="animation-delay: 0.8s">
+              <svg viewBox="0 0 16 16" width="14" height="14"><path d="M14.7 4.3a1.8 1.8 0 0 0-1.3-1.3C12.2 2.7 8 2.7 8 2.7s-4.2 0-5.4.3A1.8 1.8 0 0 0 1.3 4.3C1 5.5 1 8 1 8s0 2.5.3 3.7c.2.7.7 1.1 1.3 1.3 1.2.3 5.4.3 5.4.3s4.2 0 5.4-.3c.6-.2 1.1-.6 1.3-1.3.3-1.2.3-3.7.3-3.7s0-2.5-.3-3.7ZM6.5 10.3V5.7L10.4 8l-3.9 2.3Z" fill="currentColor"/></svg>
+              YouTube
+              <span class="scan-dot"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS STATE -->
+      <div id="results-state" class="results-state hidden">
+        <!-- Fixed Header -->
+        <header class="header">
+          <div class="header-left">
+            <img src="logo.png" alt="RateIQ" class="logo-img-sm">
+          </div>
+          <div class="header-right">
+            <div id="confidence-badge" class="confidence-badge">
+              <span class="confidence-label">Confidence</span>
+              <span id="confidence-value" class="confidence-value">--</span>
+            </div>
+            <button class="toggle-btn collapse-btn" aria-label="Collapse panel">
+              <svg viewBox="0 0 20 20" width="18" height="18" fill="none">
+                <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Scrollable content -->
+        <main class="content">
+          <!-- Product Name -->
+          <h1 id="product-name" class="product-name"></h1>
+
+          <!-- Recommendation Card -->
+          <div id="recommendation-card" class="recommendation-card">
+            <div id="rec-icon" class="rec-icon"></div>
+            <div class="rec-body">
+              <div id="rec-verdict" class="rec-verdict"></div>
+              <p id="rec-summary" class="rec-summary"></p>
+            </div>
+          </div>
+
+          <!-- Sentiment Breakdown -->
+          <section class="section">
+            <h2 class="section-title">Sentiment Breakdown</h2>
+            <div class="sentiment-bar-container">
+              <div class="sentiment-bar">
+                <div id="bar-positive" class="bar-segment bar-positive"></div>
+                <div id="bar-neutral" class="bar-segment bar-neutral"></div>
+                <div id="bar-negative" class="bar-segment bar-negative"></div>
+              </div>
+              <div class="sentiment-labels">
+                <div class="sentiment-label positive">
+                  <span class="dot dot-positive"></span>
+                  Positive <strong id="pct-positive"></strong>
+                </div>
+                <div class="sentiment-label neutral">
+                  <span class="dot dot-neutral"></span>
+                  Neutral <strong id="pct-neutral"></strong>
+                </div>
+                <div class="sentiment-label negative">
+                  <span class="dot dot-negative"></span>
+                  Negative <strong id="pct-negative"></strong>
+                </div>
+              </div>
+            </div>
+            <p class="review-count">Based on <strong id="total-reviews"></strong> reviews</p>
+          </section>
+
+          <!-- ROI / Value Assessment -->
+          <section class="section">
+            <h2 class="section-title">Value Assessment</h2>
+            <div class="value-meter-container">
+              <div class="value-meter-labels">
+                <span>Poor Value</span>
+                <span>Great Value</span>
+              </div>
+              <div class="value-meter-track">
+                <div id="value-meter-fill" class="value-meter-fill"></div>
+                <div id="value-meter-thumb" class="value-meter-thumb"></div>
+              </div>
+              <p id="value-score-text" class="value-score-text"></p>
+            </div>
+            <p id="value-description" class="value-description"></p>
+          </section>
+
+          <!-- Pros & Cons -->
+          <section class="section">
+            <h2 class="section-title">Pros &amp; Cons</h2>
+            <div class="pros-cons-grid">
+              <div class="pros-col">
+                <h3 class="pros-heading">
+                  <svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="8" fill="#E8F5E9"/><path d="M5 8l2 2 4-4" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+                  Pros
+                </h3>
+                <ul id="pros-list" class="feature-list"></ul>
+              </div>
+              <div class="cons-col">
+                <h3 class="cons-heading">
+                  <svg viewBox="0 0 16 16" width="14" height="14"><circle cx="8" cy="8" r="8" fill="#FBE9E7"/><path d="M8 5v3.5M8 10.5v.5" stroke="#C62828" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+                  Cons
+                </h3>
+                <ul id="cons-list" class="feature-list"></ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- Sources -->
+          <footer class="sources-footer">
+            <h2 class="section-title">Sources</h2>
+            <div id="sources-list" class="sources-pills"></div>
+          </footer>
+        </main>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
