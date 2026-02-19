@@ -1,42 +1,3 @@
-const MOCK_DATA = {
-  product: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
-  confidence: 92,
-  recommendation: {
-    verdict: "Strong Buy",
-    type: "buy", // "buy" | "dont-buy" | "consider"
-    summary:
-      "Overwhelmingly positive sentiment across all platforms. Reviewers consistently praise the noise cancellation and comfort, with minor concerns about price and durability.",
-  },
-  sentiment: {
-    positive: 72,
-    neutral: 18,
-    negative: 10,
-  },
-  totalReviews: 196,
-  value: {
-    score: 85,
-    description:
-      "At its current price point, the XM5 delivers exceptional value. Superior ANC, 30-hour battery life, and multipoint connectivity justify the premium over competitors.",
-  },
-  pros: [
-    "Industry-leading active noise cancellation",
-    "Extremely comfortable for extended wear",
-    "30-hour battery life with quick charging",
-    "Excellent multipoint Bluetooth connectivity",
-  ],
-  cons: [
-    "Premium price point vs competitors",
-    "No foldable design — less portable",
-    "Touch controls can be finicky",
-    "Limited EQ customization without app",
-  ],
-  sources: [
-    { platform: "tiktok", name: "TikTok", count: 45 },
-    { platform: "reddit", name: "Reddit", count: 128 },
-    { platform: "youtube", name: "YouTube", count: 23 },
-  ],
-};
-
 const PLATFORM_ICONS = {
   tiktok: `<svg viewBox="0 0 16 16" width="14" height="14"><path d="M8.5 1v9.5a2.5 2.5 0 1 1-2-2.45V5.5A5 5 0 1 0 11 10V4.5a4.5 4.5 0 0 0 3 1.13V3.08A4.5 4.5 0 0 1 11 1H8.5Z" fill="#333"/></svg>`,
   reddit: `<svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm4.6 9.2a1.1 1.1 0 0 1-1.1 1.1c-.3 0-.6-.1-.8-.3-.7.5-1.7.8-2.7.8s-2-.3-2.7-.8c-.2.2-.5.3-.8.3a1.1 1.1 0 0 1 0-2.2c.3 0 .6.1.8.3.4-.3.9-.5 1.4-.6l.7-3.2 2.2.5a.8.8 0 1 1-.1.5l-1.8-.4-.6 2.6c.5.1 1 .3 1.4.6.2-.2.5-.3.8-.3a1.1 1.1 0 0 1 1.1 1.1ZM6 9.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm4 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm-.3 1.3c-.5.5-1.2.7-1.7.7s-1.2-.2-1.7-.7a.3.3 0 0 1 .4-.4c.3.4.8.5 1.3.5s1-.2 1.3-.5a.3.3 0 0 1 .4.4Z" fill="#FF4500"/></svg>`,
@@ -57,6 +18,12 @@ const collapsedBar = document.getElementById("collapsed-bar");
 const expandBtn = document.getElementById("expand-btn");
 const collapseBtns = document.querySelectorAll(".collapse-btn");
 const collapsedLogo = document.querySelector(".collapsed-logo");
+
+const inputState = document.getElementById("input-state");
+const loadingState = document.getElementById("loading-state");
+const resultsState = document.getElementById("results-state");
+const productInput = document.getElementById("product-input");
+const analyzeBtn = document.getElementById("analyze-btn");
 
 // ── Panel state ──
 let panelExpanded = false;
@@ -100,6 +67,57 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// ── State transitions ──
+function showState(state) {
+  inputState.classList.add("hidden");
+  loadingState.classList.add("hidden");
+  resultsState.classList.add("hidden");
+  state.classList.remove("hidden");
+}
+
+// ── Input handling ──
+productInput.addEventListener("input", () => {
+  analyzeBtn.disabled = productInput.value.trim().length === 0;
+});
+
+productInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && productInput.value.trim().length > 0) {
+    startAnalysis();
+  }
+});
+
+analyzeBtn.addEventListener("click", startAnalysis);
+
+function startAnalysis() {
+  const productName = productInput.value.trim();
+  if (!productName) return;
+
+  showState(loadingState);
+
+  // TODO: connect with backend
+  // Send `productName` to the backend API and call `handleBackendResponse(data)` on success.
+  // Example:
+  // fetch("https://your-backend-api.com/analyze", {
+  //   method: "POST",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify({ product: productName }),
+  // })
+  //   .then((res) => res.json())
+  //   .then((data) => handleBackendResponse(data))
+  //   .catch((err) => handleBackendError(err));
+}
+
+function handleBackendResponse(data) {
+  showState(resultsState);
+  populateResults(data);
+}
+
+function handleBackendError(error) {
+  console.error("Backend error:", error);
+  // Fall back to input state so user can retry
+  showState(inputState);
+}
+
 // ── Populate results ──
 function populateResults(data) {
   // Confidence
@@ -110,6 +128,8 @@ function populateResults(data) {
 
   // Recommendation card
   const card = document.getElementById("recommendation-card");
+  // Reset previous type classes
+  card.classList.remove("buy", "dont-buy", "consider");
   const type = data.recommendation.type;
   card.classList.add(type);
   document.getElementById("rec-icon").innerHTML = REC_ICONS[type];
@@ -138,6 +158,7 @@ function populateResults(data) {
 
   // Pros
   const prosList = document.getElementById("pros-list");
+  prosList.innerHTML = "";
   data.pros.forEach((pro) => {
     const li = document.createElement("li");
     li.textContent = pro;
@@ -146,6 +167,7 @@ function populateResults(data) {
 
   // Cons
   const consList = document.getElementById("cons-list");
+  consList.innerHTML = "";
   data.cons.forEach((con) => {
     const li = document.createElement("li");
     li.textContent = con;
@@ -154,6 +176,7 @@ function populateResults(data) {
 
   // Sources
   const sourcesList = document.getElementById("sources-list");
+  sourcesList.innerHTML = "";
   data.sources.forEach((source) => {
     const pill = document.createElement("div");
     pill.className = "source-pill";
@@ -163,22 +186,16 @@ function populateResults(data) {
   });
 }
 
-// ── Init: simulate loading → expand → results ──
+// ── Init ──
 function init() {
-  const loadingState = document.getElementById("loading-state");
-  const resultsState = document.getElementById("results-state");
+  // Start on input state (loading & results are hidden by default)
+  showState(inputState);
 
-  // Auto-expand the panel on load (simulates context menu trigger)
+  // Auto-expand the panel on load
   setTimeout(() => {
     expandPanel();
+    productInput.focus();
   }, 300);
-
-  // Show loading for 2.5s, then transition to results
-  setTimeout(() => {
-    loadingState.classList.add("hidden");
-    resultsState.classList.remove("hidden");
-    populateResults(MOCK_DATA);
-  }, 2800);
 }
 
 document.addEventListener("DOMContentLoaded", init);
