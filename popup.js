@@ -1,3 +1,5 @@
+const API_BASE_URL = 'http://localhost:5000';
+
 const PLATFORM_ICONS = {
   tiktok: `<svg viewBox="0 0 16 16" width="14" height="14"><path d="M8.5 1v9.5a2.5 2.5 0 1 1-2-2.45V5.5A5 5 0 1 0 11 10V4.5a4.5 4.5 0 0 0 3 1.13V3.08A4.5 4.5 0 0 1 11 1H8.5Z" fill="#333"/></svg>`,
   reddit: `<svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm4.6 9.2a1.1 1.1 0 0 1-1.1 1.1c-.3 0-.6-.1-.8-.3-.7.5-1.7.8-2.7.8s-2-.3-2.7-.8c-.2.2-.5.3-.8.3a1.1 1.1 0 0 1 0-2.2c.3 0 .6.1.8.3.4-.3.9-.5 1.4-.6l.7-3.2 2.2.5a.8.8 0 1 1-.1.5l-1.8-.4-.6 2.6c.5.1 1 .3 1.4.6.2-.2.5-.3.8-.3a1.1 1.1 0 0 1 1.1 1.1ZM6 9.2a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm4 0a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Zm-.3 1.3c-.5.5-1.2.7-1.7.7s-1.2-.2-1.7-.7a.3.3 0 0 1 .4-.4c.3.4.8.5 1.3.5s1-.2 1.3-.5a.3.3 0 0 1 .4.4Z" fill="#FF4500"/></svg>`,
@@ -105,6 +107,32 @@ function startAnalysis() {
   //   .then((res) => res.json())
   //   .then((data) => handleBackendResponse(data))
   //   .catch((err) => handleBackendError(err));
+  fetch(`${API_BASE_URL}/api/analyze`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      product: productName
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then(err => {
+          throw new Error(err.message || 'Analysis failed');
+        });
+      }
+      return res.json();
+    })
+    .then((data) => {
+      console.log('Analysis result:', data);
+      handleBackendResponse(data);
+    })
+    .catch((err) => {
+      console.error('Backend error:', err);
+      handleBackendError(err);
+      alert(`Analysis failed: ${err.message}`);
+    });
 }
 
 function handleBackendResponse(data) {
@@ -148,12 +176,18 @@ function populateResults(data) {
   document.getElementById("pct-negative").textContent = data.sentiment.negative + "%";
   document.getElementById("total-reviews").textContent = data.totalReviews.toLocaleString();
 
-  // Value meter
+// Value meter
   requestAnimationFrame(() => {
     document.getElementById("value-meter-fill").style.width = data.value.score + "%";
     document.getElementById("value-meter-thumb").style.left = data.value.score + "%";
   });
-  document.getElementById("value-score-text").textContent = data.value.score + "/100 — Great Value";
+  const score = data.value.score;
+  let valueLabel;
+  if (score <= 40) valueLabel = "Poor Value";
+  else if (score <= 60) valueLabel = "Fair Value";
+  else if (score <= 80) valueLabel = "Good Value";
+  else valueLabel = "Great Value";
+  document.getElementById("value-score-text").textContent = score + "/100 — " + valueLabel;
   document.getElementById("value-description").textContent = data.value.description;
 
   // Pros

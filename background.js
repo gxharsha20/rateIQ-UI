@@ -8,6 +8,6 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "analyze-rateiq") {
-    chrome.action.openPopup();
+    chrome.sidePanel.open({ tabId: tab.id });
   }
 });
